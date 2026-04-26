@@ -1,7 +1,7 @@
 services:
   - type: web
     name: medisense-api
-    runtime: python3
+    runtime: python3.11
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
     envVars:
@@ -11,8 +11,6 @@ services:
         value: medisense
       - key: SECRET_KEY
         value: YOUR_SECRET_KEY_CHANGE_IN_PRODUCTION
-      - key: PYTHON_VERSION
-        value: 3.13.0
 
   - type: static
     name: medisense-frontend
