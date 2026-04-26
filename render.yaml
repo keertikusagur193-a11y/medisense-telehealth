@@ -1,5 +1,4 @@
 services:
-  # Backend API Service
   - type: web
     name: medisense-api
     runtime: python3
@@ -15,20 +14,11 @@ services:
       - key: PYTHON_VERSION
         value: 3.13.0
 
-  # Frontend Static Site
-  - type: web
+  - type: static
     name: medisense-frontend
-    runtime: static
     buildCommand: echo "No build step needed for static files"
     staticPublishPath: .
     routes:
       - type: rewrite
         source: /api/(.*)
         destination: https://medisense-api.onrender.com/api/$1
-    headers:
-      - source: /**/*
-        headers:
-          - key: X-Frame-Options
-            value: DENY
-          - key: X-Content-Type-Options
-            value: nosniff
