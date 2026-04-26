@@ -1,10 +1,8 @@
-from __future__ import annotations
-
 import json
 import os
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict, List, Union
 from uuid import uuid4
 
 from dotenv import load_dotenv
@@ -23,7 +21,7 @@ DATA_FILE = APP_DIR / "medisense-db.json"
 
 class ConsultationCreate(BaseModel):
     name: str = Field(min_length=1)
-    age: str | int
+    age: Union[str, int]
     language: str
     symptomsText: str
     topRisk: str
@@ -62,7 +60,7 @@ class DoctorLogin(BaseModel):
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str
-    doctor: dict[str, Any]
+    doctor: Dict[str, Any]
 
 
 # Patient Registration Models
@@ -133,7 +131,7 @@ class JsonStore:
         if not self.path.exists():
             self._write(self._empty())
 
-    def _empty(self) -> dict[str, list[dict[str, Any]]]:
+    def _empty(self) -> Dict[str, List[Dict[str, Any]]]:
         return {
             "patients": [],
             "doctors": [],
@@ -148,26 +146,26 @@ class JsonStore:
             "payments": [],
         }
 
-    def _read(self) -> dict[str, list[dict[str, Any]]]:
+    def _read(self) -> Dict[str, List[Dict[str, Any]]]:
         try:
             return json.loads(self.path.read_text(encoding="utf-8"))
         except (json.JSONDecodeError, FileNotFoundError):
             return self._empty()
 
-    def _write(self, data: dict[str, list[dict[str, Any]]]) -> None:
+    def _write(self, data: Dict[str, List[Dict[str, Any]]]) -> None:
         self.path.write_text(json.dumps(data, indent=2), encoding="utf-8")
 
-    def insert(self, collection: str, document: dict[str, Any]) -> dict[str, Any]:
+    def insert(self, collection: str, document: Dict[str, Any]) -> Dict[str, Any]:
         data = self._read()
         data.setdefault(collection, [])
         data[collection].insert(0, document)
         self._write(data)
         return document
 
-    def list(self, collection: str, limit: int = 20) -> list[dict[str, Any]]:
+    def list(self, collection: str, limit: int = 20) -> List[Dict[str, Any]]:
         return self._read().get(collection, [])[:limit]
 
-    def update(self, collection: str, document_id: str, document: dict[str, Any]) -> dict[str, Any]:
+    def update(self, collection: str, document_id: str, document: Dict[str, Any]) -> Dict[str, Any]:
         data = self._read()
         data.setdefault(collection, [])
         for i, doc in enumerate(data[collection]):
@@ -186,15 +184,15 @@ class MongoStore:
         self.client.admin.command("ping")
         self.db = self.client[database_name]
 
-    def insert(self, collection: str, document: dict[str, Any]) -> dict[str, Any]:
+    def insert(self, collection: str, document: Dict[str, Any]) -> Dict[str, Any]:
         self.db[collection].insert_one(document.copy())
         return document
 
-    def list(self, collection: str, limit: int = 20) -> list[dict[str, Any]]:
+    def list(self, collection: str, limit: int = 20) -> List[Dict[str, Any]]:
         records = self.db[collection].find({}, {"_id": 0}).sort("createdAt", -1).limit(limit)
         return list(records)
 
-    def update(self, collection: str, document_id: str, document: dict[str, Any]) -> dict[str, Any]:
+    def update(self, collection: str, document_id: str, document: Dict[str, Any]) -> Dict[str, Any]:
         self.db[collection].update_one({"id": document_id}, {"$set": document})
         return document
 
@@ -203,7 +201,7 @@ def utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-def make_document(payload: dict[str, Any]) -> dict[str, Any]:
+def make_document(payload: Dict[str, Any]) -> Dict[str, Any]:
     return {
         "id": str(uuid4()),
         "createdAt": utc_now(),
@@ -240,14 +238,14 @@ def hash_password(password: str) -> str:
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
 
-def create_access_token(data: dict[str, Any]) -> str:
+def create_access_token(data: Dict[str, Any]) -> str:
     to_encode = data.copy()
     expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict[str, Any]:
+def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)) -> Dict[str, Any]:
     try:
         payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
         doctor_id: str = payload.get("sub")
@@ -271,18 +269,18 @@ app.add_middleware(
 
 
 @app.get("/health")
-def health() -> dict[str, str]:
+def health() -> Dict[str, str]:
     return {"status": "ok", "database": store.__class__.__name__}
 
 
 @app.get("/consultations")
-def list_consultations() -> list[dict[str, Any]]:
+def list_consultations() -> List[Dict[str, Any]]:
     return store.list("consultations")
 
 
 @app.post("/consultations")
-def create_consultation(payload: ConsultationCreate) -> dict[str, Any]:
-    consultation = make_document(payload.model_dump())
+def create_consultation(payload: ConsultationCreate) -> Dict[str, Any]:
+    consultation = make_document(payload.dict())
     patient = make_document(
         {
             "name": payload.name,
@@ -341,12 +339,12 @@ def list_prescriptions() -> list[dict[str, Any]]:
 
 @app.post("/prescriptions")
 def create_prescription(payload: PrescriptionCreate) -> dict[str, Any]:
-    return store.insert("prescriptions", make_document(payload.model_dump()))
+    return store.insert("prescriptions", make_document(payload.dict()))
 
 
 @app.post("/chat-logs")
 def create_chat_log(payload: ChatLogCreate) -> dict[str, Any]:
-    return store.insert("chat_logs", make_document(payload.model_dump()))
+    return store.insert("chat_logs", make_document(payload.dict()))
 
 
 @app.get("/records")
@@ -519,7 +517,7 @@ def create_appointment(payload: AppointmentCreate) -> dict[str, Any]:
     if not patient_exists:
         raise HTTPException(status_code=400, detail="Patient not found")
 
-    appointment = make_document(payload.model_dump())
+    appointment = make_document(payload.dict())
     result = store.insert("appointments", appointment)
 
     # Create notification for doctor
@@ -574,7 +572,7 @@ def create_medical_record(payload: MedicalRecordCreate) -> dict[str, Any]:
     if not patient_exists:
         raise HTTPException(status_code=400, detail="Patient not found")
 
-    record = make_document(payload.model_dump())
+    record = make_document(payload.dict())
     return store.insert("medical_records", record)
 
 
@@ -604,7 +602,7 @@ def create_review(payload: ReviewCreate) -> dict[str, Any]:
     if not patient_exists:
         raise HTTPException(status_code=400, detail="Patient not found")
 
-    review = make_document(payload.model_dump())
+    review = make_document(payload.dict())
     return store.insert("reviews", review)
 
 
@@ -636,7 +634,7 @@ def list_notifications() -> list[dict[str, Any]]:
 
 @app.post("/notifications")
 def create_notification(payload: NotificationCreate) -> dict[str, Any]:
-    notification = make_document(payload.model_dump())
+    notification = make_document(payload.dict())
     return store.insert("notifications", notification)
 
 
@@ -671,7 +669,7 @@ def create_payment(payload: PaymentCreate) -> dict[str, Any]:
     if not appointment_exists:
         raise HTTPException(status_code=400, detail="Appointment not found")
 
-    payment = make_document(payload.model_dump())
+    payment = make_document(payload.dict())
     result = store.insert("payments", payment)
 
     # Create notification for patient
