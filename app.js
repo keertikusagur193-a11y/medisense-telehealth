@@ -43,7 +43,7 @@ const modeButtons = document.querySelectorAll(".mode-button");
 
 const storageKey = "medisense-cases";
 const sessionKey = "medisense-session";
-const apiBaseUrl = "http://localhost:8000";
+const apiBaseUrl = "https://medisense-api.onrender.com";
 let activeUrgencyFilter = "all";
 let activeRecordTab = "consultations";
 let apiState = "checking";

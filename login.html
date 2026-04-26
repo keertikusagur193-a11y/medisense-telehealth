@@ -124,7 +124,7 @@
 
           try {
             // Verify doctor exists in database
-            const verifyResponse = await fetch(`http://localhost:8000/doctors/verify/${doctorId}`);
+            const verifyResponse = await fetch(`https://medisense-api.onrender.com/doctors/verify/${doctorId}`);
             const verifyData = await verifyResponse.json();
 
             if (!verifyData.exists) {
@@ -152,7 +152,7 @@
 
           try {
             // Authenticate patient
-            const loginResponse = await fetch("http://localhost:8000/patients/login", {
+            const loginResponse = await fetch("https://medisense-api.onrender.com/patients/login", {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",

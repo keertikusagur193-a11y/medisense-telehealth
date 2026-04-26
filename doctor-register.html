@@ -114,7 +114,7 @@
         delete data.confirmPassword;
 
         try {
-          const response = await fetch("http://localhost:8000/doctors/register", {
+          const response = await fetch("https://medisense-api.onrender.com/doctors/register", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",

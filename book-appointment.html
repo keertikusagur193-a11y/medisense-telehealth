@@ -73,7 +73,7 @@
         if (!patientId) return;
 
         try {
-          const response = await fetch(`http://localhost:8000/appointments/patient/${patientId}`);
+          const response = await fetch(`https://medisense-api.onrender.com/appointments/patient/${patientId}`);
           const appointments = await response.json();
 
           if (appointments.length === 0) {
@@ -116,7 +116,7 @@
         bookAppointmentButton.textContent = "Booking...";
 
         try {
-          const response = await fetch("http://localhost:8000/appointments", {
+          const response = await fetch("https://medisense-api.onrender.com/appointments", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",

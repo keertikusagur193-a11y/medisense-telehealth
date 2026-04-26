@@ -1,5 +1,5 @@
 // Patient Dashboard JS
-const apiBaseUrl = "http://localhost:8000";
+const apiBaseUrl = "https://medisense-api.onrender.com";
 const storageKey = "medisense-cases";
 const sessionKey = "medisense-session";
 

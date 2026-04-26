@@ -99,7 +99,7 @@
           recordsContainer.style.display = "block";
 
           // Load medical records
-          const recordsResponse = await fetch(`http://localhost:8000/medical-records/patient/${patientId}`);
+          const recordsResponse = await fetch(`https://medisense-api.onrender.com/medical-records/patient/${patientId}`);
           const medicalRecords = await recordsResponse.json();
 
           if (medicalRecords.length === 0) {
@@ -117,7 +117,7 @@
           }
 
           // Load consultations
-          const consultationsResponse = await fetch("http://localhost:8000/consultations");
+          const consultationsResponse = await fetch("https://medisense-api.onrender.com/consultations");
           const allConsultations = await consultationsResponse.json();
           const patientConsultations = allConsultations.filter(c => c.patientId === patientId);
 
@@ -153,7 +153,7 @@
           }
 
           // Load prescriptions
-          const prescriptionsResponse = await fetch("http://localhost:8000/prescriptions");
+          const prescriptionsResponse = await fetch("https://medisense-api.onrender.com/prescriptions");
           const allPrescriptions = await prescriptionsResponse.json();
           const patientPrescriptions = allPrescriptions.filter(p => p.patientId === patientId);
 
