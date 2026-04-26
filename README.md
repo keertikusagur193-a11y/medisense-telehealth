@@ -58,3 +58,57 @@ The FastAPI backend stores MongoDB-style collections:
 - `prescriptions`
 
 If `MONGODB_URI` is set, the backend uses MongoDB. Without MongoDB, it automatically falls back to `backend/medisense-db.json` so the demo still works.
+
+## Deployment to Render
+
+### Option 1: Automated Multi-Service Deployment
+
+1. **Connect your GitHub repository** to Render
+2. **Create a new Blueprint** from your repository
+3. **Render will automatically detect** the `render.yaml` configuration
+4. **Set environment variables** in Render dashboard:
+   - `MONGODB_URI`: Your MongoDB Atlas connection string
+   - `MONGODB_DATABASE`: medisense
+   - `SECRET_KEY`: A secure random string
+
+### Option 2: Manual Service Creation
+
+#### Backend API Service:
+- **Service Type**: Web Service
+- **Runtime**: Python 3
+- **Build Command**: `pip install -r requirements.txt`
+- **Start Command**: `uvicorn backend.main:app --host 0.0.0.0 --port $PORT`
+- **Environment Variables**:
+  - `MONGODB_URI`: Your MongoDB Atlas connection string
+  - `MONGODB_DATABASE`: medisense
+  - `SECRET_KEY`: A secure random string
+
+#### Frontend Static Site:
+- **Service Type**: Static Site
+- **Build Command**: Leave empty (no build needed)
+- **Publish Directory**: `.` (root directory)
+- **Add rewrite rule**: `/api/(.*)` → `https://YOUR_BACKEND_URL.onrender.com/api/$1`
+
+### MongoDB Setup
+
+1. **Create a MongoDB Atlas account** at mongodb.com
+2. **Create a free cluster**
+3. **Get your connection string** from Atlas dashboard
+4. **Whitelist Render's IP** (0.0.0.0/0) in Network Access
+
+### Environment Variables
+
+Set these in your Render service settings:
+
+```bash
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/?retryWrites=true&w=majority
+MONGODB_DATABASE=medisense
+SECRET_KEY=your-super-secure-random-key-here
+```
+
+### Testing Deployment
+
+After deployment:
+- **Frontend**: `https://medisense-frontend.onrender.com`
+- **Backend API**: `https://medisense-api.onrender.com`
+- **API Docs**: `https://medisense-api.onrender.com/docs`

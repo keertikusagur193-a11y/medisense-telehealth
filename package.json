@@ -1,0 +1,13 @@
+{
+  "name": "medisense-frontend",
+  "version": "1.0.0",
+  "description": "MediSense Telehealth Platform Frontend",
+  "main": "serve.mjs",
+  "scripts": {
+    "start": "node serve.mjs",
+    "dev": "node serve.mjs"
+  },
+  "keywords": ["telehealth", "healthcare", "medisense"],
+  "author": "MediSense Team",
+  "license": "MIT"
+}
