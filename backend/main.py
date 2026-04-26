@@ -213,13 +213,14 @@ def create_store() -> JsonStore | MongoStore:
     mongo_uri = os.getenv("MONGODB_URI")
     database_name = os.getenv("MONGODB_DATABASE", "medisense")
 
-    if mongo_uri:
+    if mongo_uri and mongo_uri != "YOUR_MONGODB_ATLAS_CONNECTION_STRING":
         try:
             return MongoStore(mongo_uri, database_name)
-        except Exception:
+        except Exception as e:
+            print(f"Warning: MongoDB connection failed ({e}), falling back to JSON store")
             return JsonStore(DATA_FILE)
-
-    return JsonStore(DATA_FILE)
+    else:
+        return JsonStore(DATA_FILE)
 
 
 load_dotenv()
