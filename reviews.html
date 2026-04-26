@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MediSense | Rate Your Doctor</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <section class="auth-shell">
+      <div class="auth-panel">
+        <div>
+          <p class="eyebrow">MediSense reviews</p>
+          <h1 class="auth-title">Rate Your Doctor</h1>
+          <p class="auth-copy">Share your experience and help other patients.</p>
+        </div>
+
+        <form class="auth-form" id="reviewForm">
+          <div>
+            <label class="input-label" for="patientId">Your Patient ID *</label>
+            <input id="patientId" type="text" placeholder="Enter your patient ID" required />
+          </div>
+          <div>
+            <label class="input-label" for="doctorId">Doctor ID *</label>
+            <input id="doctorId" type="text" placeholder="Enter doctor ID to review" required />
+          </div>
+          <div>
+            <label class="input-label" for="rating">Rating *</label>
+            <select id="rating" required>
+              <option value="">Select rating</option>
+              <option value="5">⭐⭐⭐⭐⭐ Excellent (5)</option>
+              <option value="4">⭐⭐⭐⭐ Very Good (4)</option>
+              <option value="3">⭐⭐⭐ Good (3)</option>
+              <option value="2">⭐⭐ Fair (2)</option>
+              <option value="1">⭐ Poor (1)</option>
+            </select>
+          </div>
+          <div>
+            <label class="input-label" for="comment">Your Review *</label>
+            <textarea id="comment" placeholder="Share your experience with this doctor" required></textarea>
+          </div>
+        </form>
+
+        <button class="primary-button" id="submitReviewButton" type="button">Submit Review</button>
+        <button class="secondary-button" id="backToDashboardButton" type="button">Back to Dashboard</button>
+
+        <div id="message" class="message" style="display: none;"></div>
+
+        <div style="margin-top: 2rem;">
+          <h3>Doctor Ratings</h3>
+          <div>
+            <label class="input-label" for="searchDoctorId">Search Doctor Ratings</label>
+            <input id="searchDoctorId" type="text" placeholder="Enter doctor ID" />
+            <button class="secondary-button" id="searchRatingsButton" type="button">Search</button>
+          </div>
+          <div id="doctorRatings" class="ratings-display" style="display: none;">
+            <div id="averageRating"></div>
+            <div id="reviewsList"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <script>
+      const submitReviewButton = document.getElementById("submitReviewButton");
+      const searchRatingsButton = document.getElementById("searchRatingsButton");
+      const backToDashboardButton = document.getElementById("backToDashboardButton");
+      const messageDiv = document.getElementById("message");
+      const doctorRatings = document.getElementById("doctorRatings");
+      const averageRating = document.getElementById("averageRating");
+      const reviewsList = document.getElementById("reviewsList");
+
+      function showMessage(message, isError = false) {
+        messageDiv.textContent = message;
+        messageDiv.style.display = "block";
+        messageDiv.style.color = isError ? "#e74c3c" : "#27ae60";
+      }
+
+      function hideMessage() {
+        messageDiv.style.display = "none";
+      }
+
+      function renderStars(rating) {
+        const fullStars = '⭐'.repeat(rating);
+        const emptyStars = '☆'.repeat(5 - rating);
+        return fullStars + emptyStars;
+      }
+
+      async function loadDoctorRatings(doctorId) {
+        try {
+          // Load average rating
+          const averageResponse = await fetch(`http://localhost:8000/reviews/doctor/${doctorId}/average`);
+          const averageData = await averageResponse.json();
+
+          averageRating.innerHTML = `
+            <h4>Dr. ${doctorId}</h4>
+            <div class="rating-summary">
+              <span class="stars">${renderStars(Math.round(averageData.averageRating))}</span>
+              <span class="rating-number">${averageData.averageRating.toFixed(1)} out of 5</span>
+              <span class="total-reviews">(${averageData.totalReviews} reviews)</span>
+            </div>
+          `;
+
+          // Load individual reviews
+          const reviewsResponse = await fetch(`http://localhost:8000/reviews/doctor/${doctorId}`);
+          const reviews = await reviewsResponse.json();
+
+          if (reviews.length === 0) {
+            reviewsList.innerHTML = "<p>No reviews yet.</p>";
+          } else {
+            const reviewsHtml = reviews.map(review => `
+              <div class="review-item">
+                <div class="review-header">
+                  <span class="stars">${renderStars(review.rating)}</span>
+                  <small>by Patient ${review.patientId}</small>
+                </div>
+                <p class="review-comment">${review.comment}</p>
+                <small class="review-date">${new Date(review.createdAt).toLocaleDateString()}</small>
+              </div>
+            `).join("");
+            reviewsList.innerHTML = reviewsHtml;
+          }
+
+          doctorRatings.style.display = "block";
+        } catch (error) {
+          console.error("Error loading ratings:", error);
+          showMessage("Error loading doctor ratings.", true);
+        }
+      }
+
+      submitReviewButton.addEventListener("click", async () => {
+        hideMessage();
+
+        const patientId = document.getElementById("patientId").value.trim();
+        const doctorId = document.getElementById("doctorId").value.trim();
+        const rating = parseInt(document.getElementById("rating").value);
+        const comment = document.getElementById("comment").value.trim();
+
+        if (!patientId || !doctorId || !rating || !comment) {
+          showMessage("Please fill in all required fields", true);
+          return;
+        }
+
+        // Show loading state
+        submitReviewButton.disabled = true;
+        submitReviewButton.textContent = "Submitting...";
+
+        try {
+          const response = await fetch("http://localhost:8000/reviews", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              patientId,
+              doctorId,
+              rating,
+              comment
+            })
+          });
+
+          const data = await response.json();
+
+          if (response.ok) {
+            showMessage("Review submitted successfully!");
+            // Clear form
+            document.getElementById("reviewForm").reset();
+            // Reload ratings
+            loadDoctorRatings(doctorId);
+          } else {
+            showMessage(data.detail || "Review submission failed", true);
+          }
+        } catch (error) {
+          console.error("Review submission error:", error);
+          showMessage("Network error. Please try again.", true);
+        } finally {
+          submitReviewButton.disabled = false;
+          submitReviewButton.textContent = "Submit Review";
+        }
+      });
+
+      searchRatingsButton.addEventListener("click", () => {
+        const doctorId = document.getElementById("searchDoctorId").value.trim();
+        if (!doctorId) {
+          showMessage("Please enter a doctor ID", true);
+          return;
+        }
+        loadDoctorRatings(doctorId);
+      });
+
+      backToDashboardButton.addEventListener("click", () => {
+        window.location.href = "patient-dashboard.html";
+      });
+
+      // Load patient ID from session
+      document.addEventListener("DOMContentLoaded", () => {
+        const session = JSON.parse(sessionStorage.getItem("medisense-session") || "{}");
+        if (session.patientId) {
+          document.getElementById("patientId").value = session.patientId;
+        }
+      });
+    </script>
+
+    <style>
+      .rating-summary {
+        font-size: 1.2rem;
+        margin: 0.5rem 0;
+      }
+      .stars {
+        font-size: 1.5rem;
+        margin-right: 0.5rem;
+      }
+      .rating-number {
+        font-weight: bold;
+        color: #2c3e50;
+      }
+      .total-reviews {
+        color: #7f8c8d;
+        margin-left: 0.5rem;
+      }
+      .review-item {
+        border: 1px solid #ddd;
+        padding: 1rem;
+        margin-bottom: 0.5rem;
+        border-radius: 4px;
+        background: #f9f9f9;
+      }
+      .review-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+      }
+      .review-comment {
+        margin: 0.5rem 0;
+        font-style: italic;
+      }
+      .review-date {
+        color: #7f8c8d;
+        font-size: 0.8rem;
+      }
+    </style>
+  </body>
+</html>

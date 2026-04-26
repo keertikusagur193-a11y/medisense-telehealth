@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MediSense | Doctor Registration</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <section class="auth-shell">
+      <div class="auth-panel">
+        <div>
+          <p class="eyebrow">MediSense doctor registration</p>
+          <h1 class="auth-title">Register as a Doctor</h1>
+          <p class="auth-copy">Create your doctor account to access the MediSense platform.</p>
+        </div>
+        
+        <form class="auth-form" id="doctorRegisterForm">
+          <div class="form-group">
+            <label for="name">Full Name</label>
+            <input type="text" id="name" name="name" required />
+          </div>
+
+          <div class="form-group">
+            <label for="email">Email Address</label>
+            <input type="email" id="email" name="email" required />
+          </div>
+
+          <div class="form-group">
+            <label for="phone">Phone Number</label>
+            <input type="tel" id="phone" name="phone" required />
+          </div>
+
+          <div class="form-group">
+            <label for="doctorId">Doctor ID (Unique)</label>
+            <input type="text" id="doctorId" name="doctorId" required />
+          </div>
+
+          <div class="form-group">
+            <label for="specialization">Specialization</label>
+            <select id="specialization" name="specialization" required>
+              <option value="">Select Specialization</option>
+              <option value="General Medicine">General Medicine</option>
+              <option value="Cardiology">Cardiology</option>
+              <option value="Dermatology">Dermatology</option>
+              <option value="Neurology">Neurology</option>
+              <option value="Orthopedics">Orthopedics</option>
+              <option value="Pediatrics">Pediatrics</option>
+              <option value="Psychiatry">Psychiatry</option>
+              <option value="Radiology">Radiology</option>
+              <option value="Surgery">Surgery</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="experience">Years of Experience</label>
+            <input type="number" id="experience" name="experience" min="0" required />
+          </div>
+
+          <div class="form-group">
+            <label for="licenseNumber">Medical License Number</label>
+            <input type="text" id="licenseNumber" name="licenseNumber" required />
+          </div>
+
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" required />
+          </div>
+
+          <div class="form-group">
+            <label for="confirmPassword">Confirm Password</label>
+            <input type="password" id="confirmPassword" name="confirmPassword" required />
+          </div>
+
+          <button class="primary-button" type="submit">Register as Doctor</button>
+        </form>
+        
+        <button class="primary-button" id="registerButton" type="button">Register Doctor</button>
+        <button class="secondary-button" id="backToLoginButton" type="button">Back to Login</button>
+        
+        <div id="message" class="message" style="display: none;"></div>
+      </div>
+    </section>
+
+    <script>
+      const form = document.getElementById("doctorRegisterForm");
+      const backToLoginButton = document.getElementById("backToLoginButton");
+      const messageDiv = document.getElementById("message");
+
+      function showMessage(message, isError = false) {
+        messageDiv.textContent = message;
+        messageDiv.style.display = "block";
+        messageDiv.style.color = isError ? "#e74c3c" : "#27ae60";
+      }
+
+      function hideMessage() {
+        messageDiv.style.display = "none";
+      }
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData);
+
+        // Validate passwords match
+        if (data.password !== data.confirmPassword) {
+          showMessage("Passwords do not match!", true);
+          return;
+        }
+
+        // Remove confirmPassword from data
+        delete data.confirmPassword;
+
+        try {
+          const response = await fetch("http://localhost:8000/doctors/register", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(data),
+          });
+
+          const result = await response.json();
+
+          if (response.ok) {
+            showMessage("Doctor registration successful! Redirecting to login...");
+            setTimeout(() => {
+              window.location.href = "login.html";
+            }, 2000);
+          } else {
+            showMessage(result.detail || "Registration failed!", true);
+          }
+        } catch (error) {
+          console.error("Error:", error);
+          showMessage("Network error. Please try again.", true);
+        }
+      });
+
+      backToLoginButton.addEventListener("click", () => {
+        window.location.href = "login.html";
+      });
+    </script>
+  </body>
+</html>

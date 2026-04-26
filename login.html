@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MediSense | AI Telehealth Assistant</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <section class="auth-shell">
+      <div class="auth-panel">
+        <div>
+          <p class="eyebrow">MediSense access</p>
+          <h1 class="auth-title">Choose your role and enter the care platform.</h1>
+          <p class="auth-copy">Patients can describe symptoms and book consultations. Doctors can review the queue, records, and prescriptions.</p>
+        </div>
+        <div class="auth-grid">
+          <button class="role-card active-role" type="button" data-role="patient">
+            <strong>Patient</strong>
+            <span>Symptom intake, AI chat, appointments</span>
+          </button>
+          <button class="role-card" type="button" data-role="doctor">
+            <strong>Doctor</strong>
+            <span>Consultation queue, records, prescriptions</span>
+          </button>
+        </div>
+        <div class="auth-form">
+          <!-- Patient login fields -->
+          <div id="patientFields" style="display: block;">
+            <div>
+              <label class="input-label" for="patientId">Patient ID *</label>
+              <input id="patientId" type="text" placeholder="Enter your patient ID" required />
+            </div>
+            <div>
+              <label class="input-label" for="patientPassword">Password *</label>
+              <input id="patientPassword" type="password" placeholder="Enter your password" required />
+            </div>
+          </div>
+
+          <!-- Guest/Doctor fields (hidden for patients) -->
+          <div id="guestFields" style="display: none;">
+            <div>
+              <label class="input-label" for="accessName">Display name</label>
+              <input id="accessName" type="text" value="Ravi Kumar" />
+            </div>
+            <div>
+              <label class="input-label" for="accessEmail">Email</label>
+              <input id="accessEmail" type="email" value="ravi@example.com" />
+            </div>
+            <div>
+              <label class="input-label" for="accessPhone">Contact number</label>
+              <input id="accessPhone" type="tel" value="+91 9876543210" />
+            </div>
+          </div>
+
+          <div id="doctorIdField" style="display: none;">
+            <label class="input-label" for="doctorId">Doctor ID</label>
+            <input id="doctorId" type="text" value="DOC001" placeholder="Enter your unique doctor ID" />
+          </div>
+        </div>
+        <button class="primary-button" id="enterPlatformButton" type="button">Enter platform</button>
+        
+        <div style="text-align: center; margin-top: 1rem;">
+          <a href="patient-register.html" style="color: #007acc; text-decoration: none; margin-right: 1rem;">New Patient? Register Here</a>
+          <a href="doctor-register.html" style="color: #007acc; text-decoration: none; margin-right: 1rem;">New Doctor? Register Here</a>
+          <a href="admin-dashboard.html" style="color: #28a745; text-decoration: none;">Admin Access</a>
+        </div>
+      </div>
+    </section>
+
+    <script>
+      let activeRole = "patient";
+      console.log("Login page loaded");
+
+      document.querySelectorAll("[data-role]").forEach((card) => {
+        card.addEventListener("click", () => {
+          document.querySelectorAll("[data-role]").forEach((c) => c.classList.remove("active-role"));
+          card.classList.add("active-role");
+          activeRole = card.dataset.role;
+
+          // Show/hide appropriate fields
+          const patientFields = document.getElementById("patientFields");
+          const guestFields = document.getElementById("guestFields");
+          const doctorIdField = document.getElementById("doctorIdField");
+
+          if (activeRole === "patient") {
+            patientFields.style.display = "block";
+            guestFields.style.display = "none";
+            doctorIdField.style.display = "none";
+          } else if (activeRole === "doctor") {
+            patientFields.style.display = "none";
+            guestFields.style.display = "none";
+            doctorIdField.style.display = "block";
+          } else {
+            // Guest mode
+            patientFields.style.display = "none";
+            guestFields.style.display = "block";
+            doctorIdField.style.display = "none";
+          }
+
+          console.log("Role selected:", activeRole);
+        });
+      });
+
+      document.getElementById("enterPlatformButton").addEventListener("click", async () => {
+        const name = document.getElementById("accessName").value.trim() || "Guest User";
+        const email = document.getElementById("accessEmail").value.trim() || "guest@example.com";
+        const phone = document.getElementById("accessPhone").value.trim() || "";
+        
+        const session = {
+          role: activeRole,
+          name: name,
+          email: email,
+          phone: phone,
+        };
+        
+        // For doctors, verify doctor ID exists in database
+        if (activeRole === "doctor") {
+          const doctorId = document.getElementById("doctorId").value.trim();
+          if (!doctorId) {
+            alert("Please enter your Doctor ID");
+            return;
+          }
+
+          try {
+            // Verify doctor exists in database
+            const verifyResponse = await fetch(`http://localhost:8000/doctors/verify/${doctorId}`);
+            const verifyData = await verifyResponse.json();
+
+            if (!verifyData.exists) {
+              alert("Doctor ID not found. Please register first or contact administrator.");
+              return;
+            }
+
+            session.doctorId = doctorId;
+          } catch (error) {
+            console.error("Error verifying doctor:", error);
+            alert("Unable to verify doctor credentials. Please try again.");
+            return;
+          }
+        }
+
+        // For patients, require authentication with patient ID and password
+        if (activeRole === "patient") {
+          const patientId = document.getElementById("patientId").value.trim();
+          const password = document.getElementById("patientPassword").value.trim();
+
+          if (!patientId || !password) {
+            alert("Please enter your Patient ID and password");
+            return;
+          }
+
+          try {
+            // Authenticate patient
+            const loginResponse = await fetch("http://localhost:8000/patients/login", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                patientId: patientId,
+                password: password
+              })
+            });
+
+            const loginData = await loginResponse.json();
+
+            if (!loginResponse.ok) {
+              alert(loginData.detail || "Invalid patient credentials");
+              return;
+            }
+
+            // Update session with authenticated patient data
+            session.patientId = loginData.patient.patientId;
+            session.name = loginData.patient.name;
+            session.email = loginData.patient.email;
+            session.phone = loginData.patient.phone;
+            session.age = loginData.patient.age;
+            session.gender = loginData.patient.gender;
+            session.address = loginData.patient.address;
+          } catch (error) {
+            console.error("Error authenticating patient:", error);
+            alert("Unable to authenticate patient. Please try again.");
+            return;
+          }
+        }
+        
+        console.log("Creating session:", session);
+        sessionStorage.setItem("medisense-session", JSON.stringify(session));
+        
+        // Redirect based on role
+        let targetPage;
+        if (activeRole === "patient") {
+          targetPage = "patient-dashboard.html";
+        } else {
+          // For doctors, redirect to doctor login page for authentication
+          targetPage = "doctor-login.html";
+        }
+        
+        console.log("Redirecting to:", targetPage);
+        
+        setTimeout(() => {
+          window.location.href = targetPage;
+        }, 100);
+      });
+    </script>
+  </body>
+</html>

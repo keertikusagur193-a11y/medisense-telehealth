@@ -1,0 +1,14 @@
+{
+  "patients": [],
+  "consultations": [],
+  "symptom_reports": [],
+  "chat_logs": [
+    {
+      "id": "c1a737f4-dd2f-4027-8cf7-174378292182",
+      "createdAt": "2026-04-26T11:05:15.840141+00:00",
+      "question": "hi",
+      "answer": "I can give general guidance, but this is not a diagnosis. Share symptoms, duration, age, and warning signs so the doctor can review safely."
+    }
+  ],
+  "prescriptions": []
+}

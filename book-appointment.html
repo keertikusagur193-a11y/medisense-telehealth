@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MediSense | Book Appointment</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <section class="auth-shell">
+      <div class="auth-panel">
+        <div>
+          <p class="eyebrow">MediSense appointment booking</p>
+          <h1 class="auth-title">Book an Appointment</h1>
+          <p class="auth-copy">Schedule a consultation with a healthcare professional.</p>
+        </div>
+
+        <form class="auth-form" id="appointmentForm">
+          <div>
+            <label class="input-label" for="patientId">Your Patient ID *</label>
+            <input id="patientId" type="text" placeholder="Enter your patient ID" required />
+          </div>
+          <div>
+            <label class="input-label" for="doctorId">Doctor ID *</label>
+            <input id="doctorId" type="text" placeholder="Enter doctor ID" required />
+          </div>
+          <div>
+            <label class="input-label" for="appointmentDate">Appointment Date *</label>
+            <input id="appointmentDate" type="date" required />
+          </div>
+          <div>
+            <label class="input-label" for="appointmentTime">Appointment Time *</label>
+            <input id="appointmentTime" type="time" required />
+          </div>
+          <div>
+            <label class="input-label" for="reason">Reason for Visit *</label>
+            <textarea id="reason" placeholder="Describe your symptoms or reason for visit" required></textarea>
+          </div>
+        </form>
+
+        <button class="primary-button" id="bookAppointmentButton" type="button">Book Appointment</button>
+        <button class="secondary-button" id="backToDashboardButton" type="button">Back to Dashboard</button>
+
+        <div id="message" class="message" style="display: none;"></div>
+
+        <div style="margin-top: 2rem;">
+          <h3>Your Appointments</h3>
+          <div id="appointmentsList" class="appointments-list">
+            <p>Loading appointments...</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <script>
+      const bookAppointmentButton = document.getElementById("bookAppointmentButton");
+      const backToDashboardButton = document.getElementById("backToDashboardButton");
+      const messageDiv = document.getElementById("message");
+      const appointmentsList = document.getElementById("appointmentsList");
+
+      function showMessage(message, isError = false) {
+        messageDiv.textContent = message;
+        messageDiv.style.display = "block";
+        messageDiv.style.color = isError ? "#e74c3c" : "#27ae60";
+      }
+
+      function hideMessage() {
+        messageDiv.style.display = "none";
+      }
+
+      async function loadPatientAppointments() {
+        const patientId = document.getElementById("patientId").value.trim();
+        if (!patientId) return;
+
+        try {
+          const response = await fetch(`http://localhost:8000/appointments/patient/${patientId}`);
+          const appointments = await response.json();
+
+          if (appointments.length === 0) {
+            appointmentsList.innerHTML = "<p>No appointments found.</p>";
+            return;
+          }
+
+          const appointmentsHtml = appointments.map(apt => `
+            <div class="appointment-item">
+              <strong>Doctor: ${apt.doctorId}</strong><br>
+              <small>Date: ${apt.appointmentDate} at ${apt.appointmentTime}</small><br>
+              <small>Reason: ${apt.reason}</small><br>
+              <small>Status: <span class="status-${apt.status}">${apt.status}</span></small>
+            </div>
+          `).join("");
+
+          appointmentsList.innerHTML = appointmentsHtml;
+        } catch (error) {
+          console.error("Error loading appointments:", error);
+          appointmentsList.innerHTML = "<p>Error loading appointments.</p>";
+        }
+      }
+
+      bookAppointmentButton.addEventListener("click", async () => {
+        hideMessage();
+
+        const patientId = document.getElementById("patientId").value.trim();
+        const doctorId = document.getElementById("doctorId").value.trim();
+        const appointmentDate = document.getElementById("appointmentDate").value;
+        const appointmentTime = document.getElementById("appointmentTime").value;
+        const reason = document.getElementById("reason").value.trim();
+
+        if (!patientId || !doctorId || !appointmentDate || !appointmentTime || !reason) {
+          showMessage("Please fill in all required fields", true);
+          return;
+        }
+
+        // Show loading state
+        bookAppointmentButton.disabled = true;
+        bookAppointmentButton.textContent = "Booking...";
+
+        try {
+          const response = await fetch("http://localhost:8000/appointments", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              patientId,
+              doctorId,
+              appointmentDate,
+              appointmentTime,
+              reason,
+              status: "scheduled"
+            })
+          });
+
+          const data = await response.json();
+
+          if (response.ok) {
+            showMessage("Appointment booked successfully!");
+            // Clear form
+            document.getElementById("appointmentForm").reset();
+            // Reload appointments
+            loadPatientAppointments();
+          } else {
+            showMessage(data.detail || "Booking failed", true);
+          }
+        } catch (error) {
+          console.error("Booking error:", error);
+          showMessage("Network error. Please try again.", true);
+        } finally {
+          bookAppointmentButton.disabled = false;
+          bookAppointmentButton.textContent = "Book Appointment";
+        }
+      });
+
+      document.getElementById("patientId").addEventListener("input", loadPatientAppointments);
+
+      backToDashboardButton.addEventListener("click", () => {
+        window.location.href = "patient-dashboard.html";
+      });
+
+      // Load appointments on page load if patient ID is available
+      document.addEventListener("DOMContentLoaded", () => {
+        const session = JSON.parse(sessionStorage.getItem("medisense-session") || "{}");
+        if (session.patientId) {
+          document.getElementById("patientId").value = session.patientId;
+          loadPatientAppointments();
+        }
+      });
+    </script>
+
+    <style>
+      .appointments-list {
+        margin-top: 1rem;
+      }
+      .appointment-item {
+        border: 1px solid #ddd;
+        padding: 1rem;
+        margin-bottom: 0.5rem;
+        border-radius: 4px;
+        background: #f9f9f9;
+      }
+      .status-scheduled { color: #f39c12; }
+      .status-completed { color: #27ae60; }
+      .status-cancelled { color: #e74c3c; }
+    </style>
+  </body>
+</html>

@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MediSense | Medical Records</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <section class="auth-shell">
+      <div class="auth-panel">
+        <div>
+          <p class="eyebrow">MediSense medical records</p>
+          <h1 class="auth-title">Your Medical Records</h1>
+          <p class="auth-copy">View your medical history and records.</p>
+        </div>
+
+        <div class="records-section">
+          <div id="patientInfo">
+            <p><strong>Patient ID:</strong> <span id="currentPatientId">Loading...</span></p>
+            <p><strong>Name:</strong> <span id="currentPatientName">Loading...</span></p>
+          </div>
+        </div>
+
+        <div id="recordsContainer" style="display: none;">
+          <h3>Medical Records</h3>
+          <div id="medicalRecordsList" class="records-list">
+            <p>Loading medical records...</p>
+          </div>
+
+          <h3>Consultation History</h3>
+          <div id="consultationsList" class="records-list">
+            <p>Loading consultations...</p>
+          </div>
+
+          <h3>Prescriptions</h3>
+          <div id="prescriptionsList" class="records-list">
+            <p>Loading prescriptions...</p>
+          </div>
+        </div>
+
+        <button class="secondary-button" id="backToDashboardButton" type="button">Back to Dashboard</button>
+
+        <div id="message" class="message" style="display: none;"></div>
+      </div>
+    </section>
+
+    <script>
+      const backToDashboardButton = document.getElementById("backToDashboardButton");
+      const messageDiv = document.getElementById("message");
+      const recordsContainer = document.getElementById("recordsContainer");
+      const medicalRecordsList = document.getElementById("medicalRecordsList");
+      const consultationsList = document.getElementById("consultationsList");
+      const prescriptionsList = document.getElementById("prescriptionsList");
+      const currentPatientId = document.getElementById("currentPatientId");
+      const currentPatientName = document.getElementById("currentPatientName");
+
+      function showMessage(message, isError = false) {
+        messageDiv.textContent = message;
+        messageDiv.style.display = "block";
+        messageDiv.style.color = isError ? "#e74c3c" : "#27ae60";
+      }
+
+      function hideMessage() {
+        messageDiv.style.display = "none";
+      }
+
+      // Check authentication and load patient data
+      function initPage() {
+        const sessionData = sessionStorage.getItem("medisense-session");
+        if (!sessionData) {
+          showMessage("Please login first", true);
+          setTimeout(() => {
+            window.location.href = "login.html";
+          }, 2000);
+          return;
+        }
+
+        const session = JSON.parse(sessionData);
+        if (session.role !== "patient" || !session.patientId) {
+          showMessage("Access denied. Patient authentication required.", true);
+          setTimeout(() => {
+            window.location.href = "login.html";
+          }, 2000);
+          return;
+        }
+
+        // Display patient info
+        currentPatientId.textContent = session.patientId;
+        currentPatientName.textContent = session.name;
+
+        // Load records automatically
+        loadMedicalRecords(session.patientId);
+      }
+
+      async function loadMedicalRecords(patientId) {
+        try {
+          showMessage("Loading your medical records...");
+          recordsContainer.style.display = "block";
+
+          // Load medical records
+          const recordsResponse = await fetch(`http://localhost:8000/medical-records/patient/${patientId}`);
+          const medicalRecords = await recordsResponse.json();
+
+          if (medicalRecords.length === 0) {
+            medicalRecordsList.innerHTML = "<p>No medical records found.</p>";
+          } else {
+            const recordsHtml = medicalRecords.map(record => `
+              <div class="record-item">
+                <strong>${record.recordType}</strong><br>
+                <small>Doctor: ${record.doctorId}</small><br>
+                <small>Date: ${new Date(record.createdAt).toLocaleDateString()}</small><br>
+                <p>${record.content}</p>
+              </div>
+            `).join("");
+            medicalRecordsList.innerHTML = recordsHtml;
+          }
+
+          // Load consultations
+          const consultationsResponse = await fetch("http://localhost:8000/consultations");
+          const allConsultations = await consultationsResponse.json();
+          const patientConsultations = allConsultations.filter(c => c.patientId === patientId);
+
+          if (patientConsultations.length === 0) {
+            consultationsList.innerHTML = "<p>No consultations found.</p>";
+          } else {
+            const consultationsHtml = patientConsultations.map(consultation => {
+              const status = consultation.status || "submitted";
+              const statusClass = getStatusClass(status);
+              const statusText = getStatusText(status);
+              const progressSteps = getProgressSteps(status);
+
+              return `
+              <div class="record-item consultation-progress">
+                <div class="consultation-header">
+                  <strong>${consultation.name}</strong>
+                  <span class="status-badge ${statusClass}">${statusText}</span>
+                </div>
+                <small>Symptoms: ${consultation.symptomsText}</small><br>
+                <small>Risk: ${consultation.topRisk} | Urgency: ${consultation.urgency}</small>
+                <div class="progress-tracker">
+                  ${progressSteps.map(step => `
+                    <div class="progress-step ${step.active ? 'active' : ''} ${step.completed ? 'completed' : ''}">
+                      <div class="step-circle">${step.icon}</div>
+                      <div class="step-label">${step.label}</div>
+                    </div>
+                  `).join('')}
+                </div>
+                <small>Date: ${new Date(consultation.createdAt).toLocaleDateString()}</small>
+              </div>
+            `;}).join("");
+            consultationsList.innerHTML = consultationsHtml;
+          }
+
+          // Load prescriptions
+          const prescriptionsResponse = await fetch("http://localhost:8000/prescriptions");
+          const allPrescriptions = await prescriptionsResponse.json();
+          const patientPrescriptions = allPrescriptions.filter(p => p.patientId === patientId);
+
+          if (patientPrescriptions.length === 0) {
+            prescriptionsList.innerHTML = "<p>No prescriptions found.</p>";
+          } else {
+            const prescriptionsHtml = patientPrescriptions.map(prescription => `
+              <div class="record-item">
+                <strong>Advice: ${prescription.advice}</strong><br>
+                <small>Symptoms: ${prescription.symptoms}</small><br>
+                <small>Urgency: ${prescription.urgency}</small><br>
+                <small>Date: ${new Date(prescription.createdAt).toLocaleDateString()}</small>
+              </div>
+            `).join("");
+            prescriptionsList.innerHTML = prescriptionsHtml;
+          }
+
+          hideMessage();
+        } catch (error) {
+          console.error("Error loading medical records:", error);
+          showMessage("Error loading medical records. Please try again.", true);
+        }
+      }
+
+      backToDashboardButton.addEventListener("click", () => {
+        window.location.href = "patient-dashboard.html";
+      });
+
+      // Initialize page on load
+      document.addEventListener("DOMContentLoaded", initPage);
+    </script>
+
+    <style>
+      .consultation-progress {
+        border-left: 4px solid #007acc;
+        padding-left: 15px;
+        margin-bottom: 20px;
+      }
+
+      .consultation-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+      }
+
+      .status-badge {
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        font-weight: bold;
+        text-transform: uppercase;
+      }
+
+      .status-submitted { background: #e3f2fd; color: #1976d2; }
+      .status-reviewing { background: #fff3e0; color: #f57c00; }
+      .status-scheduled { background: #e8f5e8; color: #2e7d32; }
+      .status-in-progress { background: #fff8e1; color: #f9a825; }
+      .status-completed { background: #e8f5e8; color: #2e7d32; }
+      .status-cancelled { background: #ffebee; color: #c62828; }
+
+      .progress-tracker {
+        display: flex;
+        justify-content: space-between;
+        margin: 15px 0;
+        position: relative;
+      }
+
+      .progress-tracker::before {
+        content: '';
+        position: absolute;
+        top: 15px;
+        left: 20px;
+        right: 20px;
+        height: 2px;
+        background: #e0e0e0;
+        z-index: 1;
+      }
+
+      .progress-step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+        z-index: 2;
+        flex: 1;
+      }
+
+      .step-circle {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: #e0e0e0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        margin-bottom: 5px;
+        transition: all 0.3s ease;
+      }
+
+      .progress-step.completed .step-circle {
+        background: #4caf50;
+        color: white;
+      }
+
+      .progress-step.active .step-circle {
+        background: #2196f3;
+        color: white;
+        animation: pulse 2s infinite;
+      }
+
+      .step-label {
+        font-size: 0.75rem;
+        text-align: center;
+        color: #666;
+        font-weight: 500;
+      }
+
+      .progress-step.completed .step-label {
+        color: #2e7d32;
+        font-weight: bold;
+      }
+
+      .progress-step.active .step-label {
+        color: #1976d2;
+        font-weight: bold;
+      }
+
+      @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+      }
+    </style>
+
+    <script>
+      function getStatusClass(status) {
+        const statusClasses = {
+          'submitted': 'status-submitted',
+          'reviewing': 'status-reviewing',
+          'scheduled': 'status-scheduled',
+          'in_progress': 'status-in-progress',
+          'completed': 'status-completed',
+          'cancelled': 'status-cancelled'
+        };
+        return statusClasses[status] || 'status-submitted';
+      }
+
+      function getStatusText(status) {
+        const statusTexts = {
+          'submitted': 'Submitted',
+          'reviewing': 'Under Review',
+          'scheduled': 'Appointment Scheduled',
+          'in_progress': 'In Progress',
+          'completed': 'Completed',
+          'cancelled': 'Cancelled'
+        };
+        return statusTexts[status] || 'Submitted';
+      }
+
+      function getProgressSteps(currentStatus) {
+        const allSteps = [
+          { key: 'submitted', label: 'Submitted', icon: '📝', completed: false, active: false },
+          { key: 'reviewing', label: 'Reviewing', icon: '👀', completed: false, active: false },
+          { key: 'scheduled', label: 'Scheduled', icon: '📅', completed: false, active: false },
+          { key: 'in_progress', label: 'In Progress', icon: '⚕️', completed: false, active: false },
+          { key: 'completed', label: 'Completed', icon: '✅', completed: false, active: false }
+        ];
+
+        const statusOrder = ['submitted', 'reviewing', 'scheduled', 'in_progress', 'completed'];
+        const currentIndex = statusOrder.indexOf(currentStatus);
+
+        return allSteps.map((step, index) => ({
+          ...step,
+          completed: index < currentIndex,
+          active: index === currentIndex && currentStatus !== 'completed' && currentStatus !== 'cancelled'
+        }));
+      }
+    </script>
+  </body>
+</html>
+
+          if (patientPrescriptions.length === 0) {
+            prescriptionsList.innerHTML = "<p>No prescriptions found.</p>";
+          } else {
+            const prescriptionsHtml = patientPrescriptions.map(prescription => `
+              <div class="record-item">
+                <strong>Symptoms: ${prescription.symptoms}</strong><br>
+                <small>Urgency: ${prescription.urgency}</small><br>
+                <small>Doctor's Advice: ${prescription.advice}</small><br>
+                <small>Date: ${new Date(prescription.createdAt).toLocaleDateString()}</small>
+              </div>
+            `).join("");
+            prescriptionsList.innerHTML = prescriptionsHtml;
+          }
+
+          recordsContainer.style.display = "block";
+          showMessage("Records loaded successfully!");
+        } catch (error) {
+          console.error("Error loading records:", error);
+          showMessage("Error loading records. Please try again.", true);
+        }
+      }
+
+      loadRecordsButton.addEventListener("click", () => {
+        const patientId = document.getElementById("patientId").value.trim();
+        if (!patientId) {
+          showMessage("Please enter your patient ID", true);
+          return;
+        }
+        loadMedicalRecords(patientId);
+      });
+
+      backToDashboardButton.addEventListener("click", () => {
+        window.location.href = "patient-dashboard.html";
+      });
+
+      // Load records on page load if patient ID is available
+      document.addEventListener("DOMContentLoaded", () => {
+        const session = JSON.parse(sessionStorage.getItem("medisense-session") || "{}");
+        if (session.patientId) {
+          document.getElementById("patientId").value = session.patientId;
+          loadMedicalRecords(session.patientId);
+        }
+      });
+    </script>
+
+    <style>
+      .records-section {
+        margin-bottom: 2rem;
+      }
+      .records-list {
+        margin-top: 1rem;
+      }
+      .record-item {
+        border: 1px solid #ddd;
+        padding: 1rem;
+        margin-bottom: 0.5rem;
+        border-radius: 4px;
+        background: #f9f9f9;
+      }
+      .record-item strong {
+        color: #2c3e50;
+      }
+      .record-item small {
+        color: #7f8c8d;
+      }
+    </style>
+  </body>
+</html>

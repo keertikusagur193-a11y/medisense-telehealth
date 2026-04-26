@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MediSense | Admin Dashboard</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <section class="auth-shell">
+      <div class="auth-panel">
+        <div>
+          <p class="eyebrow">MediSense admin</p>
+          <h1 class="auth-title">Admin Dashboard</h1>
+          <p class="auth-copy">System overview and management.</p>
+        </div>
+
+        <div class="admin-dashboard">
+          <div class="stats-grid">
+            <div class="stat-card">
+              <h3>Total Patients</h3>
+              <div class="stat-number" id="totalPatients">-</div>
+            </div>
+            <div class="stat-card">
+              <h3>Total Doctors</h3>
+              <div class="stat-number" id="totalDoctors">-</div>
+            </div>
+            <div class="stat-card">
+              <h3>Total Appointments</h3>
+              <div class="stat-number" id="totalAppointments">-</div>
+            </div>
+            <div class="stat-card">
+              <h3>Total Revenue</h3>
+              <div class="stat-number" id="totalRevenue">$0</div>
+            </div>
+          </div>
+
+          <div class="admin-sections">
+            <div class="admin-section">
+              <h3>All Patients</h3>
+              <div id="patientsList" class="data-list">
+                <p>Loading patients...</p>
+              </div>
+            </div>
+
+            <div class="admin-section">
+              <h3>All Doctors</h3>
+              <div id="doctorsList" class="data-list">
+                <p>Loading doctors...</p>
+              </div>
+            </div>
+
+            <div class="admin-section">
+              <h3>Recent Appointments</h3>
+              <div id="appointmentsList" class="data-list">
+                <p>Loading appointments...</p>
+              </div>
+            </div>
+
+            <div class="admin-section">
+              <h3>Recent Payments</h3>
+              <div id="paymentsList" class="data-list">
+                <p>Loading payments...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <button class="secondary-button" id="refreshButton" type="button">Refresh Data</button>
+        <button class="secondary-button" id="backToLoginButton" type="button">Back to Login</button>
+
+        <div id="message" class="message" style="display: none;"></div>
+      </div>
+    </section>
+
+    <script>
+      const refreshButton = document.getElementById("refreshButton");
+      const backToLoginButton = document.getElementById("backToLoginButton");
+      const messageDiv = document.getElementById("message");
+
+      function showMessage(message, isError = false) {
+        messageDiv.textContent = message;
+        messageDiv.style.display = "block";
+        messageDiv.style.color = isError ? "#e74c3c" : "#27ae60";
+      }
+
+      function hideMessage() {
+        messageDiv.style.display = "none";
+      }
+
+      async function loadAnalytics() {
+        try {
+          const response = await fetch("http://localhost:8000/analytics/overview");
+          const analytics = await response.json();
+
+          document.getElementById("totalPatients").textContent = analytics.totalPatients;
+          document.getElementById("totalDoctors").textContent = analytics.totalDoctors;
+          document.getElementById("totalAppointments").textContent = analytics.totalAppointments;
+          document.getElementById("totalRevenue").textContent = `$${analytics.totalRevenue.toFixed(2)}`;
+        } catch (error) {
+          console.error("Error loading analytics:", error);
+        }
+      }
+
+      async function loadPatients() {
+        try {
+          const response = await fetch("http://localhost:8000/records");
+          const data = await response.json();
+          const patients = data.patients.slice(0, 10); // Show last 10
+
+          if (patients.length === 0) {
+            document.getElementById("patientsList").innerHTML = "<p>No patients found.</p>";
+            return;
+          }
+
+          const patientsHtml = patients.map(patient => `
+            <div class="data-item">
+              <strong>${patient.name}</strong><br>
+              <small>ID: ${patient.patientId || 'N/A'}</small><br>
+              <small>Email: ${patient.email}</small><br>
+              <small>Phone: ${patient.phone}</small>
+            </div>
+          `).join("");
+
+          document.getElementById("patientsList").innerHTML = patientsHtml;
+        } catch (error) {
+          console.error("Error loading patients:", error);
+          document.getElementById("patientsList").innerHTML = "<p>Error loading patients.</p>";
+        }
+      }
+
+      async function loadDoctors() {
+        try {
+          const response = await fetch("http://localhost:8000/records");
+          const data = await response.json();
+          const doctors = data.doctors.slice(0, 10); // Show last 10
+
+          if (doctors.length === 0) {
+            document.getElementById("doctorsList").innerHTML = "<p>No doctors found.</p>";
+            return;
+          }
+
+          const doctorsHtml = doctors.map(doctor => `
+            <div class="data-item">
+              <strong>${doctor.name}</strong><br>
+              <small>ID: ${doctor.doctorId}</small><br>
+              <small>Specialization: ${doctor.specialization}</small><br>
+              <small>Email: ${doctor.email}</small>
+            </div>
+          `).join("");
+
+          document.getElementById("doctorsList").innerHTML = doctorsHtml;
+        } catch (error) {
+          console.error("Error loading doctors:", error);
+          document.getElementById("doctorsList").innerHTML = "<p>Error loading doctors.</p>";
+        }
+      }
+
+      async function loadAppointments() {
+        try {
+          const response = await fetch("http://localhost:8000/appointments");
+          const appointments = await response.json();
+          const recentAppointments = appointments.slice(0, 10); // Show last 10
+
+          if (recentAppointments.length === 0) {
+            document.getElementById("appointmentsList").innerHTML = "<p>No appointments found.</p>";
+            return;
+          }
+
+          const appointmentsHtml = recentAppointments.map(apt => `
+            <div class="data-item">
+              <strong>Patient: ${apt.patientId}</strong><br>
+              <small>Doctor: ${apt.doctorId}</small><br>
+              <small>Date: ${apt.appointmentDate} at ${apt.appointmentTime}</small><br>
+              <small>Status: <span class="status-${apt.status}">${apt.status}</span></small>
+            </div>
+          `).join("");
+
+          document.getElementById("appointmentsList").innerHTML = appointmentsHtml;
+        } catch (error) {
+          console.error("Error loading appointments:", error);
+          document.getElementById("appointmentsList").innerHTML = "<p>Error loading appointments.</p>";
+        }
+      }
+
+      async function loadPayments() {
+        try {
+          const response = await fetch("http://localhost:8000/payments");
+          const payments = await response.json();
+          const recentPayments = payments.slice(0, 10); // Show last 10
+
+          if (recentPayments.length === 0) {
+            document.getElementById("paymentsList").innerHTML = "<p>No payments found.</p>";
+            return;
+          }
+
+          const paymentsHtml = recentPayments.map(payment => `
+            <div class="data-item">
+              <strong>Patient: ${payment.patientId}</strong><br>
+              <small>Doctor: ${payment.doctorId}</small><br>
+              <small>Amount: $${payment.amount}</small><br>
+              <small>Status: <span class="status-${payment.status}">${payment.status}</span></small>
+            </div>
+          `).join("");
+
+          document.getElementById("paymentsList").innerHTML = paymentsHtml;
+        } catch (error) {
+          console.error("Error loading payments:", error);
+          document.getElementById("paymentsList").innerHTML = "<p>Error loading payments.</p>";
+        }
+      }
+
+      async function loadAllData() {
+        showMessage("Loading data...");
+        await Promise.all([
+          loadAnalytics(),
+          loadPatients(),
+          loadDoctors(),
+          loadAppointments(),
+          loadPayments()
+        ]);
+        showMessage("Data loaded successfully!");
+        setTimeout(hideMessage, 2000);
+      }
+
+      refreshButton.addEventListener("click", loadAllData);
+
+      backToLoginButton.addEventListener("click", () => {
+        window.location.href = "login.html";
+      });
+
+      // Load data on page load
+      document.addEventListener("DOMContentLoaded", loadAllData);
+    </script>
+
+    <style>
+      .admin-dashboard {
+        width: 100%;
+      }
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+      }
+      .stat-card {
+        background: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 8px;
+        text-align: center;
+        border: 1px solid #e9ecef;
+      }
+      .stat-card h3 {
+        margin: 0 0 0.5rem 0;
+        color: #6c757d;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .stat-number {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #2c3e50;
+      }
+      .admin-sections {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+      }
+      .admin-section {
+        background: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 8px;
+        border: 1px solid #e9ecef;
+      }
+      .admin-section h3 {
+        margin: 0 0 1rem 0;
+        color: #2c3e50;
+        border-bottom: 2px solid #3498db;
+        padding-bottom: 0.5rem;
+      }
+      .data-list {
+        max-height: 300px;
+        overflow-y: auto;
+      }
+      .data-item {
+        background: white;
+        padding: 1rem;
+        margin-bottom: 0.5rem;
+        border-radius: 4px;
+        border: 1px solid #ddd;
+      }
+      .data-item strong {
+        color: #2c3e50;
+      }
+      .data-item small {
+        color: #7f8c8d;
+        display: block;
+        margin-top: 0.25rem;
+      }
+      .status-scheduled { color: #f39c12; font-weight: bold; }
+      .status-completed { color: #27ae60; font-weight: bold; }
+      .status-cancelled { color: #e74c3c; font-weight: bold; }
+      .status-pending { color: #f39c12; font-weight: bold; }
+      .status-paid { color: #27ae60; font-weight: bold; }
+    </style>
+  </body>
+</html>

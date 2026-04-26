@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MediSense | Doctor Dashboard</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Main navigation">
+        <a class="brand" href="#overview" aria-label="MediSense home">
+          <span class="brand-mark">M</span>
+          <span>
+            <strong>MediSense</strong>
+            <small>Doctor Portal</small>
+          </span>
+        </a>
+
+        <nav class="nav-list">
+          <a class="nav-item active" href="#overview">
+            <span class="icon">H</span>
+            Dashboard
+          </a>
+          <a class="nav-item" href="#queue">
+            <span class="icon">+</span>
+            Patient Queue
+          </a>
+          <a class="nav-item" href="#prescriptions">
+            <span class="icon">R</span>
+            Prescriptions
+          </a>
+          <a class="nav-item" href="#records">
+            <span class="icon">T</span>
+            Patient Records
+          </a>
+          <a class="nav-item" href="book-appointment.html">
+            <span class="icon">📅</span>
+            Appointments
+          </a>
+          <a class="nav-item" href="reviews.html">
+            <span class="icon">⭐</span>
+            My Reviews
+          </a>
+        </nav>
+
+        <div class="doctor-mini">
+          <div class="avatar">DR</div>
+          <div>
+            <strong id="profileName">Dr. Name</strong>
+            <small id="profileEmail">doctor@example.com</small>
+            <small id="profilePhone">+91 9876543210</small>
+            <small id="profileDoctorId">DOC001</small>
+          </div>
+        </div>
+
+        <button class="logout-button" id="logoutButton" type="button">Logout</button>
+      </aside>
+
+      <main class="main" style="display: block;">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Doctor Consultation Platform</p>
+            <h1>Manage patient queue and consultations</h1>
+            <p class="session-copy" id="sessionCopy">Welcome back, Doctor!</p>
+          </div>
+          <div class="top-actions">
+            <button class="icon-button" type="button" aria-label="Notifications">!</button>
+            <button class="secondary-button" id="refreshQueueButton" type="button">Refresh Queue</button>
+          </div>
+        </header>
+
+        <section class="hero-band" id="overview">
+          <div class="hero-copy">
+            <p>Review patient consultations, AI analysis, and provide medical recommendations.</p>
+            <div class="hero-stats" aria-label="Queue statistics">
+              <div>
+                <strong id="queueCount">0</strong>
+                <span>waiting patients</span>
+              </div>
+              <div>
+                <strong id="avgTriageTime">8 min</strong>
+                <span>avg. triage</span>
+              </div>
+              <div>
+                <strong id="matchRate">91%</strong>
+                <span>symptom match</span>
+              </div>
+            </div>
+            <div class="api-banner" id="apiBanner">
+              <strong>Backend status</strong>
+              <span id="apiStatusText">Checking FastAPI connection...</span>
+            </div>
+          </div>
+          <div class="medical-visual" aria-hidden="true">
+            <div class="scan-card">
+              <div class="heart-line"></div>
+              <div class="scan-grid">
+                <span></span><span></span><span></span><span></span>
+                <span></span><span></span><span></span><span></span>
+                <span></span><span></span><span></span><span></span>
+              </div>
+            </div>
+            <div class="floating-note note-one">Patient Cases</div>
+            <div class="floating-note note-two">AI Insights</div>
+          </div>
+        </section>
+
+        <section class="content-grid lower-grid">
+          <div class="panel" id="queue">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Active consultations</p>
+                <h2>Consultation queue</h2>
+              </div>
+              <span class="status-pill live" id="queueCountPill">0 active</span>
+            </div>
+
+            <div class="queue-toolbar">
+              <input id="patientSearch" type="text" placeholder="Search patient or symptom..." />
+              <div class="filter-group" aria-label="Urgency filters">
+                <button class="secondary-button compact active-filter" type="button" data-filter="all">All</button>
+                <button class="secondary-button compact" type="button" data-filter="high">High</button>
+                <button class="secondary-button compact" type="button" data-filter="medium">Medium</button>
+                <button class="secondary-button compact" type="button" data-filter="low">Low</button>
+              </div>
+            </div>
+
+            <div class="patient-list" id="patientList">
+              <div style="padding: 20px; text-align: center; color: #999;">
+                No patients in queue. Patients will appear here when they book consultations.
+              </div>
+            </div>
+          </div>
+
+          <div class="panel prescription-panel" id="prescriptions">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Doctor action</p>
+                <h2>Prescription note</h2>
+              </div>
+            </div>
+            <div class="selected-patient" id="selectedPatient">
+              <strong>Select a patient</strong>
+              <small>Click on a patient from the queue to write a prescription</small>
+            </div>
+            <label class="input-label" for="prescriptionInput">Medical advice</label>
+            <textarea id="prescriptionInput" rows="4" placeholder="Enter diagnosis, treatment plan, and follow-up instructions..."></textarea>
+            <button class="primary-button" id="savePrescriptionButton" type="button">Save prescription</button>
+          </div>
+
+          <div class="panel records-panel" id="records">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Patient database</p>
+                <h2>Medical records</h2>
+              </div>
+              <button class="secondary-button compact" id="refreshRecordsButton" type="button">Refresh</button>
+            </div>
+            <div class="record-tabs" aria-label="Record collections">
+              <button class="record-tab active" type="button" data-record-tab="consultations">Consultations</button>
+              <button class="record-tab" type="button" data-record-tab="patients">Patients</button>
+              <button class="record-tab" type="button" data-record-tab="prescriptions">Prescriptions</button>
+            </div>
+            <div class="records-meta" id="recordsMeta">Fetching from MongoDB...</div>
+            <div class="record-list" id="recordList"></div>
+          </div>
+
+          <div class="panel database-panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Patient journey</p>
+                <h2>Clinical timeline</h2>
+              </div>
+            </div>
+            <ol class="timeline" id="timelineList">
+              <li>
+                <span></span>
+                <div>
+                  <strong>Timeline</strong>
+                  <small>Patient activity will appear here</small>
+                </div>
+              </li>
+            </ol>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="app-doctor.js"></script>
+    <script>
+      // Debug script to check if page loads
+      console.log("Doctor dashboard HTML loaded");
+      setTimeout(() => {
+        console.log("Doctor dashboard - 1 second check");
+        console.log("Session storage:", sessionStorage.getItem("medisense-session"));
+        console.log("Profile name element:", document.getElementById("profileName"));
+      }, 1000);
+    </script>
+
+    <style>
+      .patient-row {
+        display: flex;
+        align-items: center;
+        padding: 16px;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        margin-bottom: 8px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .patient-row:hover {
+        border-color: #007acc;
+        background-color: #f8f9fa;
+      }
+
+      .patient-row.active {
+        border-color: #007acc;
+        background-color: #e3f2fd;
+      }
+
+      .patient-info {
+        flex: 1;
+        margin-left: 12px;
+      }
+
+      .patient-info strong {
+        display: block;
+        color: #2c3e50;
+        margin-bottom: 4px;
+      }
+
+      .patient-info small {
+        color: #7f8c8d;
+        display: block;
+        margin-bottom: 8px;
+      }
+
+      .patient-status {
+        margin-top: 8px;
+      }
+
+      .status-badge {
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        font-weight: bold;
+        text-transform: uppercase;
+      }
+
+      .status-submitted { background: #e3f2fd; color: #1976d2; }
+      .status-reviewing { background: #fff3e0; color: #f57c00; }
+      .status-scheduled { background: #e8f5e8; color: #2e7d32; }
+      .status-in-progress { background: #fff8e1; color: #f9a825; }
+      .status-completed { background: #e8f5e8; color: #2e7d32; }
+      .status-cancelled { background: #ffebee; color: #c62828; }
+
+      .patient-actions {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 8px;
+      }
+
+      .status-select {
+        padding: 4px 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        background: white;
+      }
+
+      .status-select:focus {
+        outline: none;
+        border-color: #007acc;
+      }
+    </style>
+  </body>
+</html>

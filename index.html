@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MediSense | AI Telehealth Assistant</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <section class="auth-shell" id="authShell">
+      <div class="auth-panel">
+        <div>
+          <p class="eyebrow">MediSense access</p>
+          <h1 class="auth-title">Choose your role and enter the care platform.</h1>
+          <p class="auth-copy">Patients can describe symptoms and book consultations. Doctors can review the queue, records, and prescriptions.</p>
+        </div>
+        <div class="auth-grid">
+          <button class="role-card active-role" type="button" data-role="patient">
+            <strong>Patient</strong>
+            <span>Symptom intake, AI chat, appointments</span>
+          </button>
+          <button class="role-card" type="button" data-role="doctor">
+            <strong>Doctor</strong>
+            <span>Consultation queue, records, prescriptions</span>
+          </button>
+        </div>
+        <div class="auth-form">
+          <div>
+            <label class="input-label" for="accessName">Display name</label>
+            <input id="accessName" type="text" value="Ravi Kumar" />
+          </div>
+          <div>
+            <label class="input-label" for="accessEmail">Email</label>
+            <input id="accessEmail" type="email" value="ravi@example.com" />
+          </div>
+        </div>
+        <button class="primary-button" id="enterPlatformButton" type="button">Enter platform</button>
+      </div>
+    </section>
+
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Main navigation">
+        <a class="brand" href="#overview" aria-label="MediSense home">
+          <span class="brand-mark">M</span>
+          <span>
+            <strong>MediSense</strong>
+            <small>AI Telehealth</small>
+          </span>
+        </a>
+
+        <nav class="nav-list">
+          <a class="nav-item active" href="#overview">
+            <span class="icon">H</span>
+            Overview
+          </a>
+          <a class="nav-item" href="#triage">
+            <span class="icon">+</span>
+            AI Triage
+          </a>
+          <a class="nav-item" href="#patients">
+            <span class="icon">P</span>
+            Patients
+          </a>
+          <a class="nav-item" href="#chat">
+            <span class="icon">C</span>
+            Health Chat
+          </a>
+        </nav>
+
+        <div class="doctor-mini">
+          <div class="avatar">DS</div>
+          <div>
+            <strong>Dr. Sneha Rao</strong>
+            <small>General physician</small>
+          </div>
+        </div>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">AI Smart Telehealth Assistant Platform</p>
+            <h1>Remote care dashboard for faster symptom analysis.</h1>
+            <p class="session-copy" id="sessionCopy">Signed in as patient workspace.</p>
+          </div>
+          <div class="top-actions">
+            <button class="icon-button" type="button" aria-label="Search patients">S</button>
+            <button class="icon-button" type="button" aria-label="Notifications">!</button>
+            <button class="primary-button" id="startConsultationButton" type="button">Start consultation</button>
+          </div>
+        </header>
+
+        <section class="mode-strip" aria-label="Workspace mode">
+          <button class="mode-button active" data-mode="patient" type="button">Patient app</button>
+          <button class="mode-button" data-mode="doctor" type="button">Doctor dashboard</button>
+          <button class="mode-button" data-mode="database" type="button">MongoDB records</button>
+        </section>
+
+        <section class="hero-band" id="overview">
+          <div class="hero-copy">
+            <p>Built for patient intake, AI symptom extraction, disease risk prediction, and doctor handoff.</p>
+            <div class="hero-stats" aria-label="Platform statistics">
+              <div>
+                <strong>42</strong>
+                <span>waiting cases</span>
+              </div>
+              <div>
+                <strong>8 min</strong>
+                <span>avg. triage</span>
+              </div>
+              <div>
+                <strong>91%</strong>
+                <span>symptom match</span>
+              </div>
+            </div>
+            <div class="api-banner" id="apiBanner">
+              <strong>Backend status</strong>
+              <span id="apiStatusText">Checking FastAPI connection...</span>
+            </div>
+          </div>
+          <div class="medical-visual" aria-hidden="true">
+            <div class="scan-card">
+              <div class="heart-line"></div>
+              <div class="scan-grid">
+                <span></span><span></span><span></span><span></span>
+                <span></span><span></span><span></span><span></span>
+                <span></span><span></span><span></span><span></span>
+              </div>
+            </div>
+            <div class="floating-note note-one">NLP symptoms</div>
+            <div class="floating-note note-two">Doctor ready</div>
+          </div>
+        </section>
+
+        <section class="appointment-strip">
+          <article class="appointment-card">
+            <p class="eyebrow">Next appointment</p>
+            <strong id="nextAppointmentTitle">General consultation</strong>
+            <span id="nextAppointmentMeta">Today, 6:30 PM with Dr. Sneha Rao</span>
+          </article>
+          <article class="appointment-card">
+            <p class="eyebrow">Mode</p>
+            <strong id="appointmentModeTitle">Patient journey</strong>
+            <span id="appointmentModeMeta">Symptom summary, booking, follow-up</span>
+          </article>
+          <article class="appointment-card">
+            <p class="eyebrow">Priority</p>
+            <strong id="appointmentPriorityTitle">Medium watch</strong>
+            <span id="appointmentPriorityMeta">Hydration, fever tracking, review in 24h</span>
+          </article>
+        </section>
+
+        <section class="content-grid">
+          <div class="panel triage-panel" id="triage">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Patient mobile interface</p>
+                <h2>AI symptom intake</h2>
+              </div>
+              <span class="status-pill live">Live</span>
+            </div>
+
+            <label class="input-label" for="symptomInput">Patient message</label>
+            <div class="patient-form">
+              <div>
+                <label class="input-label" for="patientName">Name</label>
+                <input id="patientName" type="text" value="Ravi Kumar" />
+              </div>
+              <div>
+                <label class="input-label" for="patientAge">Age</label>
+                <input id="patientAge" type="number" min="1" max="120" value="28" />
+              </div>
+              <div>
+                <label class="input-label" for="patientLanguage">Language</label>
+                <select id="patientLanguage">
+                  <option>English</option>
+                  <option>Hindi</option>
+                  <option>Kannada</option>
+                  <option>Tamil</option>
+                  <option>Telugu</option>
+                </select>
+              </div>
+            </div>
+            <textarea id="symptomInput" rows="5">I have fever, headache, sore throat, cough and body pain since yesterday.</textarea>
+            <div class="button-row">
+              <button class="primary-button" id="analyzeButton" type="button">Analyze symptoms</button>
+              <button class="secondary-button" id="bookButton" type="button">Book doctor</button>
+              <button class="secondary-button" id="clearButton" type="button">Clear</button>
+            </div>
+
+            <div class="results-grid">
+              <div>
+                <h3>Extracted symptoms</h3>
+                <div class="chip-list" id="symptomChips"></div>
+              </div>
+              <div>
+                <h3>Possible conditions</h3>
+                <div class="risk-list" id="riskList"></div>
+              </div>
+            </div>
+            <div class="booking-summary" id="bookingSummary" aria-live="polite">
+              Analyze symptoms and book a doctor to create a saved consultation case.
+            </div>
+          </div>
+
+          <div class="panel mobile-preview">
+            <div class="phone-frame">
+              <div class="phone-header">
+                <span class="signal"></span>
+                <strong>CareAI</strong>
+                <span>9:41</span>
+              </div>
+              <div class="assistant-card">
+                <span class="assistant-icon">AI</span>
+                <p>Tell me how you feel. I will summarize symptoms for your doctor.</p>
+              </div>
+              <div class="chat-bubble patient">Fever and headache since yesterday.</div>
+              <div class="chat-bubble bot">I found fever, headache and possible infection signs. Booking a doctor review.</div>
+              <button class="wide-button" id="phoneBookButton" type="button">Book doctor</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="content-grid lower-grid">
+          <div class="panel" id="patients">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Doctor web dashboard</p>
+                <h2>Consultation queue</h2>
+              </div>
+              <span class="status-pill live" id="queueCountPill">3 active</span>
+            </div>
+
+            <div class="queue-toolbar">
+              <input id="patientSearch" type="text" placeholder="Search patient or symptom..." />
+              <div class="filter-group" aria-label="Urgency filters">
+                <button class="secondary-button compact active-filter" type="button" data-filter="all">All</button>
+                <button class="secondary-button compact" type="button" data-filter="high">High</button>
+                <button class="secondary-button compact" type="button" data-filter="medium">Medium</button>
+                <button class="secondary-button compact" type="button" data-filter="low">Low</button>
+              </div>
+            </div>
+
+            <div class="patient-list" id="patientList">
+              <article class="patient-row active" data-patient="Ravi Kumar" data-symptoms="Fever, headache, body pain" data-urgency="Medium">
+                <div class="avatar teal">RK</div>
+                <div>
+                  <strong>Ravi Kumar</strong>
+                  <small>Fever, headache, body pain</small>
+                </div>
+                <span class="urgency medium">Medium</span>
+              </article>
+              <article class="patient-row" data-patient="Anika Patel" data-symptoms="Cough, chest tightness" data-urgency="High">
+                <div class="avatar coral">AP</div>
+                <div>
+                  <strong>Anika Patel</strong>
+                  <small>Cough, chest tightness</small>
+                </div>
+                <span class="urgency high">High</span>
+              </article>
+              <article class="patient-row" data-patient="Mohit Iyer" data-symptoms="Stomach pain, nausea" data-urgency="Low">
+                <div class="avatar violet">MI</div>
+                <div>
+                  <strong>Mohit Iyer</strong>
+                  <small>Stomach pain, nausea</small>
+                </div>
+                <span class="urgency low">Low</span>
+              </article>
+            </div>
+          </div>
+
+          <div class="panel database-panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">MongoDB patient history</p>
+                <h2>Clinical timeline</h2>
+              </div>
+            </div>
+            <ol class="timeline" id="timelineList">
+              <li>
+                <span></span>
+                <div>
+                  <strong>Symptoms saved</strong>
+                  <small>{ fever, cough, headache, sore_throat }</small>
+                </div>
+              </li>
+              <li>
+                <span></span>
+                <div>
+                  <strong>AI prediction attached</strong>
+                  <small>Flu-like illness, viral fever, dengue screen</small>
+                </div>
+              </li>
+              <li>
+                <span></span>
+                <div>
+                  <strong>Doctor note added</strong>
+                  <small>Hydration, rest, paracetamol as advised</small>
+                </div>
+              </li>
+            </ol>
+          </div>
+
+          <div class="panel records-panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Backend records explorer</p>
+                <h2>Collection snapshot</h2>
+              </div>
+              <button class="secondary-button compact" id="refreshRecordsButton" type="button">Refresh</button>
+            </div>
+            <div class="record-tabs" aria-label="Record collections">
+              <button class="record-tab active" type="button" data-record-tab="consultations">Consultations</button>
+              <button class="record-tab" type="button" data-record-tab="patients">Patients</button>
+              <button class="record-tab" type="button" data-record-tab="prescriptions">Prescriptions</button>
+            </div>
+            <div class="records-meta" id="recordsMeta">Trying FastAPI first, then browser fallback.</div>
+            <div class="record-list" id="recordList"></div>
+          </div>
+
+          <div class="panel prescription-panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Doctor action</p>
+                <h2>Prescription note</h2>
+              </div>
+            </div>
+            <div class="selected-patient" id="selectedPatient">
+              <strong>Ravi Kumar</strong>
+              <small>Fever, headache, body pain</small>
+            </div>
+            <label class="input-label" for="prescriptionInput">Doctor advice</label>
+            <textarea id="prescriptionInput" rows="4">Rest, drink fluids, monitor temperature, and take medicine only as prescribed after consultation.</textarea>
+            <button class="primary-button" id="savePrescriptionButton" type="button">Save prescription</button>
+          </div>
+
+          <div class="panel chat-panel" id="chat">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Health questions chatbot</p>
+                <h2>Safe guidance</h2>
+              </div>
+            </div>
+            <div class="chat-window" id="chatWindow">
+              <div class="chat-bubble bot">Ask a simple health question. I will give general advice and suggest doctor review when needed.</div>
+            </div>
+            <form class="chat-form" id="chatForm">
+              <input id="chatInput" type="text" placeholder="Ask about fever, cough, headache..." autocomplete="off" />
+              <button class="primary-button compact" type="submit">Send</button>
+            </form>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>

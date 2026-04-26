@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MediSense | Patient Dashboard</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Main navigation">
+        <a class="brand" href="#overview" aria-label="MediSense home">
+          <span class="brand-mark">M</span>
+          <span>
+            <strong>MediSense</strong>
+            <small>Patient Portal</small>
+          </span>
+        </a>
+
+        <nav class="nav-list">
+          <a class="nav-item active" href="#overview">
+            <span class="icon">H</span>
+            Dashboard
+          </a>
+          <a class="nav-item" href="#triage">
+            <span class="icon">+</span>
+            New Consultation
+          </a>
+          <a class="nav-item" href="#chat">
+            <span class="icon">C</span>
+            Health Chat
+          </a>
+          <a class="nav-item" href="#history">
+            <span class="icon">T</span>
+            My History
+          </a>
+          <a class="nav-item" href="book-appointment.html">
+            <span class="icon">📅</span>
+            Book Appointment
+          </a>
+          <a class="nav-item" href="medical-records.html">
+            <span class="icon">📋</span>
+            Medical Records
+          </a>
+          <a class="nav-item" href="reviews.html">
+            <span class="icon">⭐</span>
+            Rate Doctors
+          </a>
+        </nav>
+
+        <div class="patient-profile">
+          <div class="avatar">PU</div>
+          <div>
+            <strong id="profileName">Patient User</strong>
+            <small id="profileEmail">patient@example.com</small>
+            <small id="profilePhone">+91 9876543210</small>
+          </div>
+        </div>
+
+        <button class="logout-button" id="logoutButton" type="button">Logout</button>
+      </aside>
+
+      <main class="main" style="display: block;">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Patient Care Platform</p>
+            <h1>Track your health and consultations</h1>
+            <p class="session-copy" id="sessionCopy">Welcome back!</p>
+          </div>
+          <div class="top-actions">
+            <button class="primary-button" id="newConsultationButton" type="button">Start New Consultation</button>
+          </div>
+        </header>
+
+        <section class="hero-band" id="overview">
+          <div class="hero-copy">
+            <p>Describe your symptoms, get AI analysis, and book a doctor consultation.</p>
+            <div class="hero-stats" aria-label="Your health statistics">
+              <div>
+                <strong id="consultationCount">0</strong>
+                <span>consultations</span>
+              </div>
+              <div>
+                <strong id="appointmentCount">0</strong>
+                <span>upcoming</span>
+              </div>
+              <div>
+                <strong id="chatCount">0</strong>
+                <span>chat sessions</span>
+              </div>
+            </div>
+            <div class="api-banner" id="apiBanner">
+              <strong>Backend status</strong>
+              <span id="apiStatusText">Checking FastAPI connection...</span>
+            </div>
+          </div>
+          <div class="medical-visual" aria-hidden="true">
+            <div class="scan-card">
+              <div class="heart-line"></div>
+              <div class="scan-grid">
+                <span></span><span></span><span></span><span></span>
+                <span></span><span></span><span></span><span></span>
+                <span></span><span></span><span></span><span></span>
+              </div>
+            </div>
+            <div class="floating-note note-one">Health Tracking</div>
+            <div class="floating-note note-two">Doctor Ready</div>
+          </div>
+        </section>
+
+        <section class="content-grid">
+          <div class="panel triage-panel" id="triage">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Describe your symptoms</p>
+                <h2>AI symptom analysis</h2>
+              </div>
+              <span class="status-pill live">Live</span>
+            </div>
+
+            <label class="input-label" for="symptomInput">How are you feeling?</label>
+            <div class="patient-form">
+              <div>
+                <label class="input-label" for="patientAge">Age</label>
+                <input id="patientAge" type="number" min="1" max="120" />
+              </div>
+              <div>
+                <label class="input-label" for="patientLanguage">Language</label>
+                <select id="patientLanguage">
+                  <option>English</option>
+                  <option>Hindi</option>
+                  <option>Kannada</option>
+                  <option>Tamil</option>
+                  <option>Telugu</option>
+                </select>
+              </div>
+            </div>
+            <textarea id="symptomInput" rows="5" placeholder="Describe your symptoms in detail..."></textarea>
+            <div class="button-row">
+              <button class="primary-button" id="analyzeButton" type="button">Analyze my symptoms</button>
+              <button class="secondary-button" id="clearButton" type="button">Clear</button>
+            </div>
+
+            <div class="results-grid">
+              <div>
+                <h3>Extracted symptoms</h3>
+                <div class="chip-list" id="symptomChips"></div>
+              </div>
+              <div>
+                <h3>Possible conditions</h3>
+                <div class="risk-list" id="riskList"></div>
+              </div>
+            </div>
+
+            <div class="booking-summary" id="bookingSummary" aria-live="polite">
+              Analyze your symptoms to get AI insights and book a doctor.
+            </div>
+
+            <div class="panel mobile-preview">
+              <div class="phone-frame">
+                <div class="phone-header">
+                  <span class="signal"></span>
+                  <strong>MediSense</strong>
+                  <span>9:41</span>
+                </div>
+                <div class="assistant-card">
+                  <span class="assistant-icon">AI</span>
+                  <p>Tell me how you feel. I will summarize your symptoms for a doctor.</p>
+                </div>
+                <div class="chat-bubble patient">Fever and headache since yesterday.</div>
+                <div class="chat-bubble bot">I found fever, headache and possible infection signs. Ready to book a doctor?</div>
+                <button class="wide-button" id="phoneBookButton" type="button">Book Doctor</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel chat-panel" id="chat">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Health Questions</p>
+                <h2>AI Health Chatbot</h2>
+              </div>
+            </div>
+            <div class="chat-window" id="chatWindow">
+              <div class="chat-bubble bot">Ask me anything about your health. I'll provide general guidance or suggest when to see a doctor.</div>
+            </div>
+            <form class="chat-form" id="chatForm">
+              <input id="chatInput" type="text" placeholder="Ask about your symptoms..." autocomplete="off" />
+              <button class="primary-button compact" type="submit">Send</button>
+            </form>
+          </div>
+
+          <div class="panel records-panel" id="history">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">My Health History</p>
+                <h2>Consultation records</h2>
+              </div>
+              <button class="secondary-button compact" id="refreshRecordsButton" type="button">Refresh</button>
+            </div>
+            <div class="record-tabs" aria-label="Record collections">
+              <button class="record-tab active" type="button" data-record-tab="consultations">Consultations</button>
+              <button class="record-tab" type="button" data-record-tab="prescriptions">Prescriptions</button>
+            </div>
+            <div class="records-meta" id="recordsMeta">Your consultation history will appear here.</div>
+            <div class="record-list" id="recordList"></div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <style>
+      .consultation-progress {
+        border-left: 4px solid #007acc;
+        padding-left: 15px;
+        margin-bottom: 20px;
+      }
+
+      .consultation-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+      }
+
+      .status-badge {
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        font-weight: bold;
+        text-transform: uppercase;
+      }
+
+      .status-submitted { background: #e3f2fd; color: #1976d2; }
+      .status-reviewing { background: #fff3e0; color: #f57c00; }
+      .status-scheduled { background: #e8f5e8; color: #2e7d32; }
+      .status-in-progress { background: #fff8e1; color: #f9a825; }
+      .status-completed { background: #e8f5e8; color: #2e7d32; }
+      .status-cancelled { background: #ffebee; color: #c62828; }
+
+      .progress-tracker {
+        display: flex;
+        justify-content: space-between;
+        margin: 15px 0;
+        position: relative;
+      }
+
+      .progress-tracker::before {
+        content: '';
+        position: absolute;
+        top: 15px;
+        left: 20px;
+        right: 20px;
+        height: 2px;
+        background: #e0e0e0;
+        z-index: 1;
+      }
+
+      .progress-step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+        z-index: 2;
+        flex: 1;
+      }
+
+      .step-circle {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: #e0e0e0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        margin-bottom: 5px;
+        transition: all 0.3s ease;
+      }
+
+      .progress-step.completed .step-circle {
+        background: #4caf50;
+        color: white;
+      }
+
+      .progress-step.active .step-circle {
+        background: #2196f3;
+        color: white;
+        animation: pulse 2s infinite;
+      }
+
+      .step-label {
+        font-size: 0.75rem;
+        text-align: center;
+        color: #666;
+        font-weight: 500;
+      }
+
+      .progress-step.completed .step-label {
+        color: #2e7d32;
+        font-weight: bold;
+      }
+
+      .progress-step.active .step-label {
+        color: #1976d2;
+        font-weight: bold;
+      }
+
+      .consultation-date {
+        display: block;
+        margin-top: 8px;
+        color: #888;
+        font-size: 0.8rem;
+      }
+
+      @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+      }
+    </style>
+    <script>
+      // Debug script to check if page loads
+      console.log("Patient dashboard HTML loaded");
+      setTimeout(() => {
+        console.log("Patient dashboard - 1 second check");
+        console.log("Session storage:", sessionStorage.getItem("medisense-session"));
+        console.log("Profile name element:", document.getElementById("profileName"));
+      }, 1000);
+    </script>
+  </body>
+</html>

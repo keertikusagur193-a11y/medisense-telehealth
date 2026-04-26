@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MediSense | Doctor Login</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <section class="auth-shell">
+      <div class="auth-panel">
+        <div>
+          <p class="eyebrow">MediSense doctor login</p>
+          <h1 class="auth-title">Doctor Authentication</h1>
+          <p class="auth-copy">Enter your credentials to access the doctor dashboard.</p>
+        </div>
+        
+        <form class="auth-form" id="doctorLoginForm">
+          <div>
+            <label class="input-label" for="doctorId">Doctor ID *</label>
+            <input id="doctorId" type="text" placeholder="Enter your doctor ID" required />
+          </div>
+          <div>
+            <label class="input-label" for="password">Password *</label>
+            <input id="password" type="password" placeholder="Enter your password" required />
+          </div>
+        </form>
+        
+        <button class="primary-button" id="loginButton" type="button">Login as Doctor</button>
+        <button class="secondary-button" id="backToMainButton" type="button">Back to Main Login</button>
+        
+        <div style="text-align: center; margin-top: 1rem;">
+          <a href="doctor-register.html" style="color: #007acc; text-decoration: none;">New Doctor? Register Here</a>
+        </div>
+        
+        <div id="message" class="message" style="display: none;"></div>
+      </div>
+    </section>
+
+    <script>
+      const loginButton = document.getElementById("loginButton");
+      const backToMainButton = document.getElementById("backToMainButton");
+      const messageDiv = document.getElementById("message");
+
+      function showMessage(message, isError = false) {
+        messageDiv.textContent = message;
+        messageDiv.style.display = "block";
+        messageDiv.style.color = isError ? "#e74c3c" : "#27ae60";
+      }
+
+      function hideMessage() {
+        messageDiv.style.display = "none";
+      }
+
+      loginButton.addEventListener("click", async () => {
+        hideMessage();
+        
+        const doctorId = document.getElementById("doctorId").value.trim();
+        const password = document.getElementById("password").value;
+        
+        if (!doctorId || !password) {
+          showMessage("Please enter both Doctor ID and password", true);
+          return;
+        }
+        
+        // Show loading state
+        loginButton.disabled = true;
+        loginButton.textContent = "Logging in...";
+        
+        try {
+          const response = await fetch("http://localhost:8000/doctors/login", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              doctorId,
+              password
+            })
+          });
+          
+          const data = await response.json();
+          
+          if (response.ok) {
+            // Store JWT token
+            sessionStorage.setItem("medisense-jwt-token", data.access_token);
+            
+            // Store doctor session info
+            const session = {
+              role: "doctor",
+              doctorId: data.doctor.doctorId,
+              name: data.doctor.name,
+              email: data.doctor.email,
+              phone: data.doctor.phone,
+              specialization: data.doctor.specialization
+            };
+            sessionStorage.setItem("medisense-session", JSON.stringify(session));
+            
+            showMessage("Login successful! Redirecting...");
+            
+            // Redirect to doctor dashboard
+            setTimeout(() => {
+              window.location.href = "doctor-dashboard.html";
+            }, 1000);
+          } else {
+            showMessage(data.detail || "Login failed", true);
+          }
+        } catch (error) {
+          console.error("Login error:", error);
+          showMessage("Network error. Please try again.", true);
+        } finally {
+          loginButton.disabled = false;
+          loginButton.textContent = "Login as Doctor";
+        }
+      });
+
+      backToMainButton.addEventListener("click", () => {
+        window.location.href = "login.html";
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MediSense | Patient Registration</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <section class="auth-shell">
+      <div class="auth-panel">
+        <div>
+          <p class="eyebrow">MediSense patient registration</p>
+          <h1 class="auth-title">Register as a Patient</h1>
+          <p class="auth-copy">Create your patient account to access healthcare services.</p>
+        </div>
+
+        <form class="auth-form" id="patientRegisterForm">
+          <div>
+            <label class="input-label" for="patientId">Patient ID *</label>
+            <input id="patientId" type="text" placeholder="Enter unique patient ID" required />
+          </div>
+          <div>
+            <label class="input-label" for="patientName">Full Name *</label>
+            <input id="patientName" type="text" placeholder="Enter your full name" required />
+          </div>
+          <div>
+            <label class="input-label" for="patientEmail">Email *</label>
+            <input id="patientEmail" type="email" placeholder="Enter your email" required />
+          </div>
+          <div>
+            <label class="input-label" for="patientPhone">Contact Number *</label>
+            <input id="patientPhone" type="tel" placeholder="Enter your phone number" required />
+          </div>
+          <div>
+            <label class="input-label" for="patientAge">Age *</label>
+            <input id="patientAge" type="number" min="1" max="150" placeholder="Enter your age" required />
+          </div>
+          <div>
+            <label class="input-label" for="patientGender">Gender *</label>
+            <select id="patientGender" required>
+              <option value="">Select gender</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div>
+            <label class="input-label" for="patientAddress">Address *</label>
+            <textarea id="patientAddress" placeholder="Enter your address" required></textarea>
+          </div>
+          <div>
+            <label class="input-label" for="password">Password *</label>
+            <input id="password" type="password" placeholder="Create a password (min 6 characters)" required />
+          </div>
+          <div>
+            <label class="input-label" for="confirmPassword">Confirm Password *</label>
+            <input id="confirmPassword" type="password" placeholder="Confirm your password" required />
+          </div>
+        </form>
+
+        <button class="primary-button" id="registerButton" type="button">Register Patient</button>
+        <button class="secondary-button" id="backToLoginButton" type="button">Back to Login</button>
+
+        <div style="text-align: center; margin-top: 1rem;">
+          <a href="doctor-register.html" style="color: #007acc; text-decoration: none;">Are you a Doctor? Register Here</a>
+        </div>
+
+        <div id="message" class="message" style="display: none;"></div>
+      </div>
+    </section>
+
+    <script>
+      const form = document.getElementById("patientRegisterForm");
+      const registerButton = document.getElementById("registerButton");
+      const backToLoginButton = document.getElementById("backToLoginButton");
+      const messageDiv = document.getElementById("message");
+
+      function showMessage(message, isError = false) {
+        messageDiv.textContent = message;
+        messageDiv.style.display = "block";
+        messageDiv.style.color = isError ? "#e74c3c" : "#27ae60";
+      }
+
+      function hideMessage() {
+        messageDiv.style.display = "none";
+      }
+
+      registerButton.addEventListener("click", async () => {
+        hideMessage();
+
+        // Get form values
+        const patientId = document.getElementById("patientId").value.trim();
+        const name = document.getElementById("patientName").value.trim();
+        const email = document.getElementById("patientEmail").value.trim();
+        const phone = document.getElementById("patientPhone").value.trim();
+        const age = parseInt(document.getElementById("patientAge").value);
+        const gender = document.getElementById("patientGender").value;
+        const address = document.getElementById("patientAddress").value.trim();
+        const password = document.getElementById("password").value;
+        const confirmPassword = document.getElementById("confirmPassword").value;
+
+        // Validation
+        if (!patientId || !name || !email || !phone || !age || !gender || !address || !password) {
+          showMessage("Please fill in all required fields", true);
+          return;
+        }
+
+        if (password.length < 6) {
+          showMessage("Password must be at least 6 characters long", true);
+          return;
+        }
+
+        if (password !== confirmPassword) {
+          showMessage("Passwords do not match", true);
+          return;
+        }
+
+        // Show loading state
+        registerButton.disabled = true;
+        registerButton.textContent = "Registering...";
+
+        try {
+          const response = await fetch("http://localhost:8000/patients/register", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              patientId,
+              name,
+              email,
+              phone,
+              password,
+              age,
+              gender,
+              address
+            })
+          });
+
+          const data = await response.json();
+
+          if (response.ok) {
+            showMessage(`Patient registered successfully! Patient ID: ${data.patientId}`);
+            // Clear form
+            form.reset();
+            // Redirect to login after 2 seconds
+            setTimeout(() => {
+              window.location.href = "login.html";
+            }, 2000);
+          } else {
+            showMessage(data.detail || "Registration failed", true);
+          }
+        } catch (error) {
+          console.error("Registration error:", error);
+          showMessage("Network error. Please try again.", true);
+        } finally {
+          registerButton.disabled = false;
+          registerButton.textContent = "Register Patient";
+        }
+      });
+
+      backToLoginButton.addEventListener("click", () => {
+        window.location.href = "login.html";
+      });
+    </script>
+  </body>
+</html>
