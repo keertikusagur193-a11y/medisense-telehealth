@@ -1,12 +1,11 @@
 services:
   - type: web
     name: medisense-api
-    runtime: python3
+    env: python
+    pythonVersion: 3.11.9
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.9
       - key: MONGODB_URI
         value: YOUR_MONGODB_ATLAS_CONNECTION_STRING
       - key: MONGODB_DATABASE
